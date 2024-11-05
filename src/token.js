@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken"
+import "dotenv/config"
 
-const secret = "taskmanager"
+const secret = process.env.TOKEN_SECRET
 
 class Token {
     Create(id_user) {
