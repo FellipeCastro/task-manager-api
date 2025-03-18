@@ -1,23 +1,29 @@
-import TaskRepository from "../respositories/TaskRepository.js"
+import TaskRepository from "../respositories/TaskRepository.js";
 
-class TaskService {    
+class TaskService {
     async Insert(id_board, title, description, subtasks) {
-        const { id_task } = await TaskRepository.InsertTask(id_board, title, description)
+        try {
+            if (!title || title.trim() === "") {
+                throw new Error("O título da tarefa é obrigatório.");
+            }
 
-        const subtaskResults = await Promise.all(
-            subtasks.map(subtask => TaskRepository.InsertSubtask(id_task, subtask.title))
-        )
+            if (!Array.isArray(subtasks)) {
+                throw new Error("A lista de subtarefas deve ser um array.");
+            }
 
-        return {
-            id_task,
-            subtasks: subtaskResults
+            return await TaskRepository.Insert(id_board, title, description, subtasks);
+        } catch (error) {
+            throw new Error(error.message);
         }
     }
 
     async Delete(id_board, id_task) {
-        const result = await TaskRepository.Delete(id_board, id_task)
-        return result
+        try {
+            return await TaskRepository.Delete(id_board, id_task);
+        } catch (error) {
+            throw new Error(error.message);
+        }
     }
 }
 
-export default new TaskService()
+export default new TaskService();

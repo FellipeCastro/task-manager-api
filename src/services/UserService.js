@@ -1,41 +1,68 @@
-import bcrypt from "bcrypt"
-import Token from "../token.js"
-
-import UserRepository from "../respositories/UserRepository.js"
+import bcrypt from "bcrypt";
+import Token from "../token.js";
+import UserRepository from "../respositories/UserRepository.js";
 
 class UserService {
     async Register(name, email, password) {
-        const hashedPassword = await bcrypt.hash(password, 10)
-        const result = await UserRepository.Register(name, email, hashedPassword)
+        try {
+            // Verifica se o email já está cadastrado
+            const existingUser = await UserRepository.ListByEmail(email);
+            if (existingUser) {
+                throw new Error("Email já cadastrado.");
+            }
 
-        result.token = Token.Create(result.id_user)
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const result = await UserRepository.Register(
+                name,
+                email,
+                hashedPassword
+            );
 
-        return result
+            result.token = Token.Create(result.id_user);
+
+            return result;
+        } catch (error) {
+            console.error("Erro ao registrar usuário:", error.message);
+            throw new Error(error.message);
+        }
     }
 
     async Login(email, password) {
-        const result = await UserRepository.ListByEmail(email)
+        try {
+            const user = await UserRepository.ListByEmail(email);
 
-        if (result.length === 0) {
-            return []
+            if (!user) {
+                throw new Error("Email não cadastrado.");
+            }
+
+            if (!(await bcrypt.compare(password, user.password))) {
+                throw new Error("Senha incorreta.");
+            }
+
+            delete user.password;
+            user.token = Token.Create(user.id);
+
+            return user;
+        } catch (error) {
+            console.error("Erro ao fazer login:", error.message);
+            throw new Error(error.message);
         }
-
-        if (await bcrypt.compare(password, result.password)) {
-            delete result.password
-
-            result.token = Token.Create(result.id)
-
-            return result
-        }
-
-        return []
     }
 
     async Profile(id_user) {
-        const result = await UserRepository.Profile(id_user)
+        try {
+            const user = await UserRepository.Profile(id_user);
 
-        return result
+            if (!user) {
+                throw new Error("Usuário não encontrado.");
+            }
+
+            return user;
+        } catch (error) {
+            console.error("Erro ao buscar perfil:", error.message);
+            throw new Error(error.message);
+        }
     }
 }
 
-export default new UserService()
+export default new UserService();
