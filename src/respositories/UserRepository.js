@@ -23,7 +23,7 @@ class UserRepository {
             return result.length > 0 ? result[0] : null;
         } catch (error) {
             console.error("Erro ao buscar usuário por email:", error.message);
-            throw new Error("E-mail já cadastrado");
+            throw new Error("Erro ao buscar usuário.");
         }
     }
 

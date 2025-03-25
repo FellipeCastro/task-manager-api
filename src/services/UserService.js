@@ -7,7 +7,7 @@ class UserService {
         try {
             // Verifica se o email já está cadastrado
             const existingUser = await UserRepository.ListByEmail(email);
-            if (existingUser == null) {
+            if (existingUser) {
                 throw new Error("Email já cadastrado.");
             }
 
