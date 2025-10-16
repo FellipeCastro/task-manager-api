@@ -1,26 +1,26 @@
-import { consult } from "../database/connection.js";
+import { Board, Task, Subtask } from "../models/associations.js";
 
 class BoardRepository {
     async ListFullStructure(id_user) {
         try {
-            const boardsSql = "SELECT id, title FROM boards WHERE user_id = ?";
-            const boards = await consult(boardsSql, [id_user]);
-
-            for (const board of boards) {
-                const tasksSql =
-                    "SELECT id, title, description FROM tasks WHERE board_id = ?";
-                const tasks = await consult(tasksSql, [board.id]);
-
-                for (const task of tasks) {
-                    const subtasksSql =
-                        "SELECT id, title, is_done FROM subtasks WHERE task_id = ?";
-                    const subtasks = await consult(subtasksSql, [task.id]);
-
-                    task.subtasks = subtasks;
-                }
-
-                board.tasks = tasks;
-            }
+            const boards = await Board.findAll({
+                where: { user_id: id_user },
+                attributes: ["id", "title"],
+                include: [
+                    {
+                        model: Task,
+                        as: "tasks",
+                        attributes: ["id", "title", "description"],
+                        include: [
+                            {
+                                model: Subtask,
+                                as: "subtasks",
+                                attributes: ["id", "title", "is_done"],
+                            },
+                        ],
+                    },
+                ],
+            });
 
             return boards;
         } catch (error) {
@@ -31,10 +31,12 @@ class BoardRepository {
 
     async Insert(id_user, title) {
         try {
-            const sql = "INSERT INTO boards (user_id, title) VALUES (?, ?)";
-            const result = await consult(sql, [id_user, title]);
+            const board = await Board.create({
+                user_id: id_user,
+                title,
+            });
 
-            return { id_board: result.insertId };
+            return { id_board: board.id };
         } catch (error) {
             console.error("Erro ao criar quadro:", error.message);
             throw new Error("Erro ao criar o quadro.");
@@ -43,15 +45,22 @@ class BoardRepository {
 
     async Delete(id_user, id_board) {
         try {
-            const checkSql = "SELECT id FROM boards WHERE id = ? AND user_id = ?";
-            const board = await consult(checkSql, [id_board, id_user]);
+            const board = await Board.findOne({
+                where: {
+                    id: id_board,
+                    user_id: id_user,
+                },
+            });
 
-            if (board.length === 0) {
-                throw new Error("Quadro não encontrado ou não pertence ao usuário.");
+            if (!board) {
+                throw new Error(
+                    "Quadro não encontrado ou não pertence ao usuário."
+                );
             }
 
-            const deleteSql = "DELETE FROM boards WHERE id = ?";
-            await consult(deleteSql, [id_board]);
+            await Board.destroy({
+                where: { id: id_board },
+            });
 
             return { id_board };
         } catch (error) {

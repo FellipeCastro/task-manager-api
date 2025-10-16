@@ -1,14 +1,15 @@
-import { consult } from "../database/connection.js";
+import { User, Board, Task, Subtask } from "../models/associations.js";
 
 class UserRepository {
     async Register(name, email, password) {
         try {
-            const sql =
-                "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
+            const user = await User.create({
+                name,
+                email,
+                password,
+            });
 
-            const result = await consult(sql, [name, email, password]);
-
-            return { id_user: result.insertId };
+            return { id_user: user.id };
         } catch (error) {
             console.error("Erro ao registrar usuário:", error.message);
             throw new Error("Erro ao registrar usuário.");
@@ -17,10 +18,9 @@ class UserRepository {
 
     async ListByEmail(email) {
         try {
-            const sql = "SELECT * FROM users WHERE email = ?";
-            const result = await consult(sql, [email]);
-
-            return result.length > 0 ? result[0] : null;
+            return await User.findOne({
+                where: { email },
+            });
         } catch (error) {
             console.error("Erro ao buscar usuário por email:", error.message);
             throw new Error("Erro ao buscar usuário.");
@@ -29,10 +29,11 @@ class UserRepository {
 
     async Profile(id_user) {
         try {
-            const sql = "SELECT id, name, email FROM users WHERE id = ?";
-            const result = await consult(sql, [id_user]);
+            const user = await User.findByPk(id_user, {
+                attributes: ["id", "name", "email"],
+            });
 
-            return result.length > 0 ? result[0] : null;
+            return user;
         } catch (error) {
             console.error("Erro ao buscar perfil:", error.message);
             throw new Error("Erro ao buscar perfil.");

@@ -1,11 +1,14 @@
-import { consult } from "../database/connection.js";
+import { Subtask } from "../models/associations.js";
 
 class SubtaskRepository {
     async Insert(id_task, title) {
         try {
-            const sql = "INSERT INTO subtasks (task_id, title) VALUES (?, ?)";
-            const result = await consult(sql, [id_task, title]);
-            return { id_subtask: result.insertId };
+            const subtask = await Subtask.create({
+                task_id: id_task,
+                title,
+            });
+
+            return { id_subtask: subtask.id };
         } catch (error) {
             console.error("Erro ao inserir subtarefa:", error.message);
             throw new Error("Erro ao criar a subtarefa.");
@@ -14,15 +17,13 @@ class SubtaskRepository {
 
     async Edit(id_subtask, is_done) {
         try {
-            const checkSql = "SELECT id FROM subtasks WHERE id = ?";
-            const subtaskExists = await consult(checkSql, [id_subtask]);
+            const subtask = await Subtask.findByPk(id_subtask);
 
-            if (subtaskExists.length === 0) {
+            if (!subtask) {
                 throw new Error("Subtarefa não encontrada.");
             }
 
-            const sql = "UPDATE subtasks SET is_done = ? WHERE id = ?";
-            await consult(sql, [is_done, id_subtask]);
+            await Subtask.update({ is_done }, { where: { id: id_subtask } });
 
             return { id_subtask };
         } catch (error) {
@@ -33,15 +34,15 @@ class SubtaskRepository {
 
     async Delete(id_subtask) {
         try {
-            const checkSql = "SELECT id FROM subtasks WHERE id = ?";
-            const subtaskExists = await consult(checkSql, [id_subtask]);
+            const subtask = await Subtask.findByPk(id_subtask);
 
-            if (subtaskExists.length === 0) {
+            if (!subtask) {
                 throw new Error("Subtarefa não encontrada.");
             }
 
-            const sql = "DELETE FROM subtasks WHERE id = ?";
-            await consult(sql, [id_subtask]);
+            await Subtask.destroy({
+                where: { id: id_subtask },
+            });
 
             return { id_subtask };
         } catch (error) {
