@@ -11,7 +11,7 @@ const router = Router();
 // Users
 router.post("/users/register", UserController.Register);
 router.post("/users/login", UserController.Login);
-router.get("/users/profile/:id_user", Token.Validate, UserController.Profile);
+router.get("/users/profile", Token.Validate, UserController.Profile);
 
 //Boards
 router.get(

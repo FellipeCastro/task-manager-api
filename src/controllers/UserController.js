@@ -33,7 +33,7 @@ class UserController {
 
     async Profile(req, res) {
         try {
-            const id_user = req.params.id_user;
+            const id_user = req.id_user;
 
             if (!id_user) {
                 return res.status(400).json({ error: "ID do usuário não informado." });

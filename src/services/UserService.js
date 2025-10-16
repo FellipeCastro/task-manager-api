@@ -18,9 +18,12 @@ class UserService {
                 hashedPassword
             );
 
-            result.token = Token.Create(result.id_user);
+            const token = Token.Create(result.id_user);
 
-            return result;
+            return {
+                ...result.toJSON(),
+                token,
+            };
         } catch (error) {
             console.error("Erro ao registrar usuário:", error.message);
             throw new Error(error.message);
@@ -39,10 +42,17 @@ class UserService {
                 throw new Error("Senha incorreta.");
             }
 
-            delete user.password;
-            user.token = Token.Create(user.id);
+            // Gerar token
+            const token = Token.Create(user.id);
 
-            return user;
+            // Remover senha e retornar
+            const userWithoutPassword = { ...user.toJSON() };
+            delete userWithoutPassword.password;
+
+            return {
+                ...userWithoutPassword,
+                token,
+            };
         } catch (error) {
             console.error("Erro ao fazer login:", error.message);
             throw new Error(error.message);
